@@ -1,0 +1,11 @@
+# Screen Analysis Application Requirements
+
+# Core dependencies
+mss>=9.0.1
+Pillow>=10.0.0
+
+# Google Gemini - FREE tier available! (new SDK)
+google-genai>=0.2.0
+
+# Windows window capture (only needed on Windows)
+pywin32>=305; sys_platform == 'win32'
