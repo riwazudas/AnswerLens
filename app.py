@@ -31,6 +31,10 @@ class ScreenAnalysisApp:
         self.config_file = "config.json"
         self.monitoring = False
         self.monitor_timer = None
+        self.teleprompter_window = None
+        self.teleprompter_scroll_active = False
+        self.teleprompter_scroll_timer = None
+        self.teleprompter_controls_visible = True
         
         self.setup_ui()
         self.load_config()
@@ -127,7 +131,7 @@ class ScreenAnalysisApp:
         ttk.Label(question_frame, text="Question:").pack(anchor=tk.W)
         self.question_text = scrolledtext.ScrolledText(question_frame, height=3, wrap=tk.WORD)
         self.question_text.pack(fill=tk.X, pady=5)
-        self.question_text.insert("1.0", "What do you see on this screen?")
+        self.question_text.insert("1.0", "What do you see on this screen? Give answer in around 100 words and make it into a single paragraph")
         
         # Analysis buttons frame
         analysis_btn_frame = ttk.Frame(question_frame)
@@ -140,6 +144,10 @@ class ScreenAnalysisApp:
         self.monitor_btn = ttk.Button(analysis_btn_frame, text="Start Monitoring (1 min)", 
                   command=self.toggle_monitoring)
         self.monitor_btn.pack(side=tk.LEFT, padx=5)
+        
+        self.teleprompter_btn = ttk.Button(analysis_btn_frame, text="📖 Teleprompter", 
+                  command=self.open_teleprompter)
+        self.teleprompter_btn.pack(side=tk.LEFT, padx=5)
         
         self.monitor_status_label = ttk.Label(question_frame, text="", foreground="green")
         self.monitor_status_label.pack()
@@ -449,6 +457,378 @@ class ScreenAnalysisApp:
         self.answer_text.delete("1.0", tk.END)
         self.answer_text.insert("1.0", f"Error: {error_msg}")
         messagebox.showerror("Analysis Error", f"Failed to analyze screen:\n{error_msg}")
+    
+    def open_teleprompter(self):
+        """Open or focus the teleprompter window"""
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            # If window exists, just focus it
+            self.teleprompter_window.lift()
+            self.teleprompter_window.focus_force()
+        else:
+            # Create new teleprompter window
+            self.create_teleprompter_window()
+    
+    def create_teleprompter_window(self):
+        """Create the teleprompter-style floating window"""
+        self.teleprompter_window = tk.Toplevel(self.root)
+        self.teleprompter_window.title("Teleprompter")
+        
+        # Window dimensions - taller for cue prompter style
+        window_width = 550
+        window_height = 500
+        
+        # Center the window on screen
+        screen_width = self.teleprompter_window.winfo_screenwidth()
+        screen_height = self.teleprompter_window.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 3  # Positioned upper-center like Spotlight
+        
+        self.teleprompter_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
+        # Window styling - clean and minimal with transparency
+        self.teleprompter_window.configure(bg='#2b2b2b')
+        # Allow normal window controls for resizing
+        # self.teleprompter_window.overrideredirect(True)  # Disabled to allow resizing
+        self.teleprompter_window.attributes('-alpha', 0.92)  # 92% opacity (slightly see-through)
+        
+        # Make window resizable
+        self.teleprompter_window.minsize(400, 300)  # Minimum size
+        self.teleprompter_window.resizable(True, True)
+        
+        # Add rounded corner effect with shadow (visual only)
+        main_frame = tk.Frame(self.teleprompter_window, bg='#2b2b2b', highlightthickness=2, 
+                             highlightbackground='#404040')
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+        
+        # Header with close button
+        header_frame = tk.Frame(main_frame, bg='#2b2b2b', height=40)
+        header_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+        header_frame.pack_propagate(False)
+        
+        title_label = tk.Label(header_frame, text="📖 Teleprompter View", 
+                              bg='#2b2b2b', fg='#ffffff', font=('Segoe UI', 12, 'bold'))
+        title_label.pack(side=tk.LEFT, pady=5)
+        
+        close_btn = tk.Button(header_frame, text="✕", command=self.teleprompter_window.destroy,
+                             bg='#2b2b2b', fg='#888888', font=('Segoe UI', 14), 
+                             bd=0, cursor='hand2', padx=10, pady=0)
+        close_btn.pack(side=tk.RIGHT)
+        
+        # Hide controls button
+        hide_btn = tk.Button(header_frame, text="⚙", command=self.toggle_teleprompter_controls,
+                             bg='#2b2b2b', fg='#888888', font=('Segoe UI', 14), 
+                             bd=0, cursor='hand2', padx=10, pady=0)
+        hide_btn.pack(side=tk.RIGHT, padx=5)
+        
+        # Hover effects for buttons
+        def on_enter_close(e):
+            close_btn.config(fg='#ff5555')
+        def on_leave_close(e):
+            close_btn.config(fg='#888888')
+        def on_enter_hide(e):
+            hide_btn.config(fg='#ffffff')
+        def on_leave_hide(e):
+            hide_btn.config(fg='#888888')
+        close_btn.bind('<Enter>', on_enter_close)
+        close_btn.bind('<Leave>', on_leave_close)
+        hide_btn.bind('<Enter>', on_enter_hide)
+        hide_btn.bind('<Leave>', on_leave_hide)
+        
+        # Separator line
+        separator = tk.Frame(main_frame, bg='#404040', height=1)
+        separator.pack(fill=tk.X, padx=10, pady=(0, 10))
+        
+        # Text display area with reading line marker (cue prompter style)
+        text_container = tk.Frame(main_frame, bg='#2b2b2b')
+        text_container.pack(fill=tk.BOTH, expand=True, padx=0, pady=(0, 10))
+        
+        # Create canvas for reading line overlay
+        self.teleprompter_canvas = tk.Canvas(text_container, bg='#2b2b2b', 
+                                             highlightthickness=0)
+        self.teleprompter_canvas.pack(fill=tk.BOTH, expand=True)
+        
+        # Text widget for content
+        self.teleprompter_text = tk.Text(self.teleprompter_canvas, wrap=tk.WORD, 
+                                         bg='#1a1a1a', fg='#e0e0e0',
+                                         font=('Arial', 24, 'normal'), bd=0,
+                                         padx=30, pady=60, spacing3=10,
+                                         insertbackground='#e0e0e0',
+                                         relief=tk.FLAT)
+        
+        # Place text widget in canvas
+        text_window = self.teleprompter_canvas.create_window(0, 0, anchor='nw', 
+                                                             window=self.teleprompter_text)
+        
+        # Create reading line indicator (horizontal line in upper third)
+        def create_reading_line():
+            canvas_height = self.teleprompter_canvas.winfo_height()
+            canvas_width = self.teleprompter_canvas.winfo_width()
+            reading_y = canvas_height // 3  # Upper third position
+            
+            # Delete old lines
+            self.teleprompter_canvas.delete('reading_line')
+            
+            # Create gradient effect with multiple lines
+            for i in range(3):
+                opacity = ['#ff6b6b', '#ff5252', '#ff6b6b'][i]
+                self.teleprompter_canvas.create_line(
+                    20, reading_y + i - 1, canvas_width - 20, reading_y + i - 1,
+                    fill=opacity, width=1, tags='reading_line'
+                )
+            
+            # Add subtle boxes on sides for focus
+            box_height = 60
+            self.teleprompter_canvas.create_rectangle(
+                0, reading_y - box_height//2, 15, reading_y + box_height//2,
+                fill='#ff5252', outline='', tags='reading_line'
+            )
+            self.teleprompter_canvas.create_rectangle(
+                canvas_width - 15, reading_y - box_height//2, 
+                canvas_width, reading_y + box_height//2,
+                fill='#ff5252', outline='', tags='reading_line'
+            )
+        
+        # Update reading line on resize
+        def on_canvas_configure(e):
+            canvas_width = e.width
+            self.teleprompter_canvas.itemconfig(text_window, width=canvas_width)
+            create_reading_line()
+        
+        self.teleprompter_canvas.bind('<Configure>', on_canvas_configure)
+        
+        # Control buttons frame
+        self.teleprompter_control_frame = tk.Frame(main_frame, bg='#2b2b2b')
+        self.teleprompter_control_frame.pack(fill=tk.X, padx=15, pady=(0, 10))
+        control_frame = self.teleprompter_control_frame
+        
+        # Play/Pause button
+        self.scroll_toggle_btn = tk.Button(control_frame, text="▶ Play",
+                                           command=self.toggle_teleprompter_scroll,
+                                           bg='#00aa00', fg='#ffffff',
+                                           font=('Segoe UI', 10, 'bold'), bd=0,
+                                           cursor='hand2', padx=20, pady=8)
+        self.scroll_toggle_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Reset button
+        reset_btn = tk.Button(control_frame, text="⟲ Reset",
+                             command=self.reset_teleprompter,
+                             bg='#404040', fg='#ffffff',
+                             font=('Segoe UI', 10), bd=0,
+                             cursor='hand2', padx=15, pady=8)
+        reset_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Speed controls
+        speed_label = tk.Label(control_frame, text="Speed:", bg='#2b2b2b', 
+                              fg='#cccccc', font=('Segoe UI', 10, 'bold'))
+        speed_label.pack(side=tk.LEFT, padx=(20, 5))
+        
+        self.scroll_speed_var = tk.IntVar(value=3)
+        speed_slider = tk.Scale(control_frame, from_=0, to=10,
+                               orient=tk.HORIZONTAL, variable=self.scroll_speed_var,
+                               bg='#2b2b2b', fg='#cccccc', troughcolor='#404040',
+                               highlightthickness=0, showvalue=True, length=120,
+                               width=15, resolution=0.5)
+        speed_slider.pack(side=tk.LEFT, padx=5)
+        
+        # Font size controls
+        font_label = tk.Label(control_frame, text="Size:", bg='#2b2b2b', 
+                             fg='#cccccc', font=('Segoe UI', 10, 'bold'))
+        font_label.pack(side=tk.LEFT, padx=(20, 5))
+        
+        font_minus_btn = tk.Button(control_frame, text="−",
+                                   command=lambda: self.adjust_font_size(-2),
+                                   bg='#404040', fg='#ffffff',
+                                   font=('Segoe UI', 12, 'bold'), bd=0,
+                                   cursor='hand2', padx=10, pady=5)
+        font_minus_btn.pack(side=tk.LEFT, padx=2)
+        
+        font_plus_btn = tk.Button(control_frame, text="+",
+                                  command=lambda: self.adjust_font_size(2),
+                                  bg='#404040', fg='#ffffff',
+                                  font=('Segoe UI', 12, 'bold'), bd=0,
+                                  cursor='hand2', padx=10, pady=5)
+        font_plus_btn.pack(side=tk.LEFT, padx=2)
+        
+        # Insert current answer if available
+        current_answer = self.answer_text.get("1.0", tk.END).strip()
+        if current_answer:
+            self.teleprompter_text.insert("1.0", current_answer)
+        else:
+            self.teleprompter_text.insert("1.0", "No response available yet.\n\nAnalyze a screen to see the results here.")
+            self.teleprompter_text.tag_add("center", "1.0", "end")
+            self.teleprompter_text.tag_config("center", justify='center', foreground='#888888')
+        
+        # Make text read-only but allow selection
+        self.teleprompter_text.config(state=tk.NORMAL)
+        
+        # Enable dragging the window
+        def start_move(event):
+            self.teleprompter_window.x = event.x
+            self.teleprompter_window.y = event.y
+        
+        def do_move(event):
+            deltax = event.x - self.teleprompter_window.x
+            deltay = event.y - self.teleprompter_window.y
+            x = self.teleprompter_window.winfo_x() + deltax
+            y = self.teleprompter_window.winfo_y() + deltay
+            self.teleprompter_window.geometry(f"+{x}+{y}")
+        
+        header_frame.bind('<Button-1>', start_move)
+        header_frame.bind('<B1-Motion>', do_move)
+        title_label.bind('<Button-1>', start_move)
+        title_label.bind('<B1-Motion>', do_move)
+        
+        # Keep window on top
+        self.teleprompter_window.attributes('-topmost', True)
+        
+        # Keyboard shortcuts
+        self.teleprompter_window.bind('<Escape>', lambda e: self.teleprompter_window.destroy())
+        self.teleprompter_window.bind('<space>', lambda e: self.toggle_teleprompter_scroll())
+        
+        # Cleanup when window closes
+        self.teleprompter_window.protocol("WM_DELETE_WINDOW", self.close_teleprompter)
+        
+        # Update teleprompter content when answer changes
+        self.root.after(100, self._sync_teleprompter)
+        
+        # Auto-start scrolling after 5 seconds
+        self.root.after(5000, self._auto_start_teleprompter)
+    
+    def _sync_teleprompter(self):
+        """Continuously sync the teleprompter with the main answer text"""
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            try:
+                # Get current answer
+                current_answer = self.answer_text.get("1.0", tk.END).strip()
+                teleprompter_content = self.teleprompter_text.get("1.0", tk.END).strip()
+                
+                # Update only if content has changed
+                if current_answer != teleprompter_content:
+                    # Save scroll position
+                    scroll_pos = self.teleprompter_text.yview()
+                    was_scrolling = self.teleprompter_scroll_active
+                    
+                    # Stop scrolling during update
+                    if was_scrolling:
+                        self.toggle_teleprompter_scroll()
+                    
+                    self.teleprompter_text.delete("1.0", tk.END)
+                    if current_answer:
+                        self.teleprompter_text.insert("1.0", current_answer)
+                    else:
+                        self.teleprompter_text.insert("1.0", "No response available yet.\n\nAnalyze a screen to see the results here.")
+                        self.teleprompter_text.tag_add("center", "1.0", "end")
+                        self.teleprompter_text.tag_config("center", justify='center', foreground='#888888')
+                    
+                    # Reset to top for new content
+                    self.teleprompter_text.yview_moveto(0)
+                
+                # Schedule next sync
+                self.root.after(500, self._sync_teleprompter)
+            except:
+                # Window was destroyed, stop syncing
+                pass
+    
+    def _auto_start_teleprompter(self):
+        """Auto-start scrolling after delay"""
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            # Only start if not already scrolling
+            if not self.teleprompter_scroll_active:
+                self.toggle_teleprompter_scroll()
+    
+    def toggle_teleprompter_scroll(self):
+        """Toggle automatic scrolling in teleprompter"""
+        if not hasattr(self, 'teleprompter_scroll_active'):
+            return
+            
+        self.teleprompter_scroll_active = not self.teleprompter_scroll_active
+        
+        if self.teleprompter_scroll_active:
+            self.scroll_toggle_btn.config(text="⏸ Pause", bg='#cc0000')
+            self._auto_scroll_teleprompter()
+        else:
+            self.scroll_toggle_btn.config(text="▶ Play", bg='#00aa00')
+            if self.teleprompter_scroll_timer:
+                self.root.after_cancel(self.teleprompter_scroll_timer)
+                self.teleprompter_scroll_timer = None
+    
+    def reset_teleprompter(self):
+        """Reset teleprompter to beginning"""
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            # Stop scrolling if active
+            if self.teleprompter_scroll_active:
+                self.toggle_teleprompter_scroll()
+            
+            # Scroll to top
+            self.teleprompter_text.yview_moveto(0)
+    
+    def toggle_teleprompter_controls(self):
+        """Toggle visibility of teleprompter control panel"""
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            self.teleprompter_controls_visible = not self.teleprompter_controls_visible
+            
+            if self.teleprompter_controls_visible:
+                self.teleprompter_control_frame.pack(fill=tk.X, padx=15, pady=(0, 10))
+            else:
+                self.teleprompter_control_frame.pack_forget()
+    
+    def adjust_font_size(self, delta):
+        """Adjust the teleprompter font size"""
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            current_font = self.teleprompter_text['font']
+            # Parse font tuple
+            font_parts = current_font.split()
+            if len(font_parts) >= 2:
+                font_family = font_parts[0]
+                try:
+                    font_size = int(font_parts[1])
+                    new_size = max(12, min(48, font_size + delta))  # Limit between 12 and 48
+                    self.teleprompter_text.config(font=(font_family, new_size, 'normal'))
+                except:
+                    pass
+    
+    def _auto_scroll_teleprompter(self):
+        """Automatically scroll the teleprompter text"""
+        if not self.teleprompter_scroll_active:
+            return
+        
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            try:
+                # Get current scroll position
+                current_pos = self.teleprompter_text.yview()[0]
+                
+                # Calculate scroll increment based on speed slider (0-10 range)
+                speed_value = self.scroll_speed_var.get()
+                speed = max(10, int(100 - (speed_value * 9)))  # Convert 0-10 to delay (100ms-10ms)
+                scroll_increment = 0.005  # Smaller increments for smoother scrolling
+                
+                # Check if we've reached the end
+                if current_pos >= 0.95:
+                    # Reset to top and pause
+                    self.teleprompter_text.yview_moveto(0)
+                    self.toggle_teleprompter_scroll()
+                    return
+                
+                # Smooth scroll upward
+                self.teleprompter_text.yview_moveto(current_pos + scroll_increment)
+                
+                # Scroll by small increment
+                self.teleprompter_text.yview_moveto(current_pos + scroll_increment)
+                
+                # Schedule next scroll
+                self.teleprompter_scroll_timer = self.root.after(speed, self._auto_scroll_teleprompter)
+            except:
+                self.teleprompter_scroll_active = False
+    
+    def close_teleprompter(self):
+        """Clean up and close teleprompter window"""
+        self.teleprompter_scroll_active = False
+        if self.teleprompter_scroll_timer:
+            self.root.after_cancel(self.teleprompter_scroll_timer)
+            self.teleprompter_scroll_timer = None
+        if self.teleprompter_window:
+            self.teleprompter_window.destroy()
+            self.teleprompter_window = None
 
 
 def main():
