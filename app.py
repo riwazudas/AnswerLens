@@ -23,12 +23,13 @@ class ScreenAnalysisApp:
         self.root.title("AnswerLens - AI Screen Analysis")
         self.root.geometry("1200x750")
         
-        # Set window icon (logo)
+        # Set window icon (logo) - store as instance variable to prevent garbage collection
+        self.icon_image = None
         try:
             # Try PNG format (cross-platform)
             if os.path.exists("logo.png"):
-                icon_image = tk.PhotoImage(file="logo.png")
-                self.root.iconphoto(True, icon_image)
+                self.icon_image = tk.PhotoImage(file="logo.png")
+                self.root.iconphoto(True, self.icon_image)
             elif os.path.exists("logo.ico"):
                 # For Windows: use .ico file
                 self.root.iconbitmap("logo.ico")
