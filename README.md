@@ -1,21 +1,47 @@
-# Screen Analysis Application
+# Screen Analysis Application with AI Teleprompter
 
-An intelligent application that captures your screen and uses Large Language Models (LLMs) to analyze the content and answer questions about what's displayed.
+An intelligent application that captures your screen, uses Google Gemini AI to analyze the content, and provides a professional teleprompter for reading AI responses.
 
-## Features
+## ✨ Features
 
-- **Screen Capture**: Capture full screen or specific regions
-- **LLM Integration**: Supports OpenAI GPT-4 Vision and Anthropic Claude
-- **Interactive GUI**: User-friendly interface built with Tkinter
-- **Question & Answer**: Ask questions about your screen content and get intelligent responses
-- **Screenshot Management**: Save captured screenshots for later reference
+### Screen Capture
+- **Multiple Capture Modes**:
+  - Full screen capture
+  - Specific window capture (Windows only)
+  - Interactive region selection
+  - Fixed region for repeated captures
+- **Live Preview**: See your captured content instantly
+- **Screenshot Export**: Save captures as PNG files
 
-## Prerequisites
+### AI Analysis with Google Gemini
+- **FREE API**: Uses Google Gemini 1.5 Flash (completely free)
+- **Vision AI**: Analyzes screenshots and answers questions about content
+- **Continuous Monitoring**: Auto-capture and analyze every minute
+- **Context-Aware**: Provides detailed, intelligent responses about screen content
+
+### 📖 Professional Teleprompter
+- **Cue Prompter Style**: Reading line marker for focused reading
+- **Auto-Scroll**: Smooth automatic scrolling with adjustable speed (0-10)
+- **Auto-Start**: Begins scrolling automatically after 5 seconds
+- **Customizable Display**:
+  - Adjustable font size (12-48pt)
+  - Resizable window
+  - Semi-transparent overlay (92% opacity)
+  - Always-on-top mode
+- **Reading Line**: Red horizontal marker shows current reading position
+- **Control Panel**: Show/hide settings for distraction-free reading
+- **Keyboard Shortcuts**:
+  - `Space` - Play/Pause scrolling
+  - `Escape` - Close teleprompter
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - Python 3.8 or higher
-- API key from OpenAI or Anthropic
+- Google Gemini API key (FREE)
 
-## Installation
+### Installation
 
 1. Clone or download this repository
 
@@ -24,11 +50,11 @@ An intelligent application that captures your screen and uses Large Language Mod
 pip install -r requirements.txt
 ```
 
-3. Get an API key:
-   - **OpenAI**: Sign up at [platform.openai.com](https://platform.openai.com/) and generate an API key
-   - **Anthropic**: Sign up at [console.anthropic.com](https://console.anthropic.com/) and generate an API key
-
-## Usage
+3. Get a FREE API key:
+   - Visit [Google AI Studio](https://aistudio.google.com/apikey)
+   - Sign in with your Google account
+   - Click "Create API Key"
+   - Copy your API key
 
 ### Running the Application
 
@@ -36,28 +62,94 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### Using the GUI
+## 📖 Usage Guide
 
-1. **Configure LLM**:
-   - Select your preferred provider (OpenAI or Anthropic)
-   - Enter your API key
-   - Click "Initialize LLM"
+### Initial Setup
 
-2. **Capture Screen**:
-   - Click "Capture Full Screen" to take a screenshot
-   - The preview will appear in the preview panel
+1. **Initialize Gemini AI**:
+   - Paste your API key in the "API Key" field
+   - Check "Remember" to save it for future sessions
+   - Click "Initialize"
+   - Status will show green when ready
 
-3. **Ask Questions**:
-   - Type your question in the question box
-   - Click "Analyze Screen" to get an AI-powered answer
-   - The response will appear in the answer box
+### Capturing Screens
 
-4. **Save Screenshots** (optional):
-   - Click "Save Screenshot" to save the current capture
+2. **Choose Capture Mode**:
+   - **Full Screen**: Capture entire display
+   - **Select Window**: Choose a specific application window (Windows)
+   - **Select Region**: Draw a rectangle to select area
+   - **Fixed Region**: Set a region once, capture repeatedly
 
-### Alternative: Use as Library
+3. **Take Screenshot**:
+   - Click "📷 Capture" button
+   - View preview in the right panel
 
-You can also use the components programmatically:
+### Analyzing Content
+
+4. **Ask Questions**:
+   - Type your question (default: "What do you see on this screen?")
+   - Click "Analyze Screen"
+   - Read the AI response
+
+### Using the Teleprompter
+
+5. **Open Teleprompter**:
+   - Click "📖 Teleprompter" button
+   - Window opens with current AI response
+   - Automatically starts scrolling after 5 seconds
+
+6. **Teleprompter Controls**:
+   - **▶ Play / ⏸ Pause**: Start/stop auto-scrolling
+   - **⟲ Reset**: Jump back to beginning
+   - **Speed Slider**: Adjust scroll speed (0=slowest, 10=fastest)
+   - **− / +**: Decrease/increase font size
+   - **⚙ Gear Icon**: Hide/show control panel
+   - **Resize Window**: Drag corners to resize
+
+### Continuous Monitoring
+
+7. **Auto-Monitor Mode**:
+   - Click "Start Monitoring (1 min)"
+   - Application captures and analyzes every 60 seconds
+   - Perfect for monitoring changing content
+   - Click "Stop Monitoring" to end
+
+## 💡 Use Cases
+
+- **Accessibility**: Screen reader enhancement with AI descriptions
+- **Presentations**: Read AI-generated notes via teleprompter
+- **Learning**: Get explanations about code, diagrams, or tutorials
+- **Documentation**: Generate descriptions of UI elements and workflows
+- **Troubleshooting**: Analyze error messages and system dialogs
+- **Content Creation**: Review and read AI-generated content smoothly
+- **Data Extraction**: Extract and analyze information from screenshots
+- **Monitoring**: Continuous analysis of changing screen content
+
+## 🎯 Teleprompter Tips
+
+- **Optimal Speed**: Start with speed 3, adjust to your reading pace
+- **Font Size**: Use + / − buttons to find comfortable size
+- **Hide Controls**: Click ⚙ for distraction-free reading
+- **Window Size**: Resize to fit your screen layout
+- **Transparency**: See through window to view background content
+- **Reading Line**: Focus on the red line marker while reading
+
+## 📁 Project Structure
+
+```
+ScreenAnalysis/
+├── app.py                 # Main GUI application with teleprompter
+├── screen_analyzer.py     # Screen capture functionality
+├── llm_analyzer.py        # Google Gemini AI integration
+├── region_selector.py     # Interactive region selection tool
+├── requirements.txt       # Python dependencies
+├── config.json           # Saved configuration (API key)
+└── README.md             # This file
+```
+
+## 🔧 Advanced Usage
+
+### Use as Python Library
 
 ```python
 from screen_analyzer import ScreenCapture
@@ -68,82 +160,114 @@ capturer = ScreenCapture()
 img = capturer.capture_screen()
 img_base64 = capturer.image_to_base64(img)
 
-# Analyze with LLM
-analyzer = LLMAnalyzer(provider='anthropic', api_key='your-api-key')
-response = analyzer.analyze_image(img_base64, "What do you see on this screen?")
+# Analyze with Gemini
+analyzer = LLMAnalyzer(api_key='your-api-key')
+response = analyzer.analyze_image(img_base64, "What do you see?")
 print(response)
 ```
 
-## Environment Variables
+### Environment Variable (Optional)
 
-You can set API keys as environment variables instead of entering them in the GUI:
+Set API key as environment variable:
 
-**Windows (PowerShell)**:
 ```powershell
-$env:OPENAI_API_KEY="your-openai-key"
-$env:ANTHROPIC_API_KEY="your-anthropic-key"
+# Windows PowerShell
+$env:GEMINI_API_KEY="your-api-key"
+
+# Windows Command Prompt
+set GEMINI_API_KEY=your-api-key
+
+# Linux/Mac
+export GEMINI_API_KEY="your-api-key"
 ```
 
-**Windows (Command Prompt)**:
-```cmd
-set OPENAI_API_KEY=your-openai-key
-set ANTHROPIC_API_KEY=your-anthropic-key
-```
+### Fixed Region for Monitoring
 
-**Linux/Mac**:
-```bash
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
-```
+1. 📝 License
 
-## Project Structure
+This project is provided as-is for educational and personal use.
 
-```
-ScreenAnalysis/
-├── app.py                 # Main GUI application
-├── screen_analyzer.py     # Screen capture functionality
-├── llm_analyzer.py        # LLM integration (OpenAI, Anthropic)
-├── requirements.txt       # Python dependencies
-└── README.md             # This file
-```
+## 🤝 Contributing
 
-## Example Use Cases
+Contributions welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
+- Improve documentation
 
-- **Accessibility**: Describe screen content for visually impaired users
-- **Documentation**: Generate descriptions of UI elements
-- **Troubleshooting**: Ask questions about error messages or dialogs
-- **Learning**: Get explanations about code, diagrams, or content on screen
-- **Data Extraction**: Extract text or information from screenshots
-- **Design Review**: Get feedback on UI designs and layouts
+## 🙏 Acknowledgments
 
-## API Costs
+- **Google Gemini**: Powerful free AI vision model
+- **Python Community**: Amazing libraries (Pillow, mss, tkinter)
+- **Cue Prompter**: Inspiration for teleprompter design
 
-Both OpenAI and Anthropic charge for API usage:
-- **OpenAI GPT-4 Vision**: Check current pricing at [openai.com/pricing](https://openai.com/pricing)
-- **Anthropic Claude**: Check current pricing at [anthropic.com/pricing](https://www.anthropic.com/pricing)
+## 📞 Support
 
-Images are automatically resized to reduce costs while maintaining quality.
+For issues or questions:
+1. Check the Troubleshooting section
+2. Review Google Gemini documentation
+3. Open an issue on the repository
 
-## Troubleshooting
+## ⭐ Star This Project
 
-**"API key not found" error**:
-- Make sure you've entered the API key in the GUI or set it as an environment variable
+If you find this useful, please consider starring the repository!
+
+---
+
+**Built with ❤️ using Python, Google Gemini AI, and Tkinter**d the API key and clicked "Initialize"
+- Check that you copied the complete key from Google AI Studio
 
 **"Failed to capture screen" error**:
-- Ensure you have proper screen capture permissions on your system
-- On macOS, you may need to grant Screen Recording permissions in System Preferences
+- Run as administrator (Windows)
+- Check screen recording permissions (macOS)
+- Close conflicting screen capture applications
+
+**Teleprompter not starting**:
+- Ensure you've analyzed a screen first
+- Check if window is hidden behind other windows
+- Try closing and reopening the teleprompter
+
+**Window capture not available**:
+- Window capture is Windows-only
+- Use "Select Region" or "Fixed Region" on other platforms
 
 **Import errors**:
-- Run `pip install -r requirements.txt` to install all dependencies
+- Run: `pip install -r requirements.txt`
+- Ensure all files are in the same directory
+- Check Python version (3.8+ required)
 
-**"Module not found" errors**:
-- Make sure all files (app.py, screen_analyzer.py, llm_analyzer.py) are in the same directory
+## 🔒 Security & Privacy
 
-## Security Note
+- **API Key Storage**: Keys saved locally in `config.json` (optional)
+- **Data Privacy**: Screenshots sent to Google Gemini API
+- **No Tracking**: No telemetry or usage tracking
+- **Local Processing**: All capture processing done locally
+- **Best Practice**: Use environment variables for API keys in production
 
-- Never share your API keys publicly
-- API keys in the GUI are displayed as asterisks but stored in memory
-- Consider using environment variables for better security
+## 🎨 Customization
+
+### Teleprompter Appearance
+
+Edit `app.py` to customize:
+- Background color: `bg='#1a1a1a'`
+- Text color: `fg='#e0e0e0'`  
+- Reading line color: `fill='#ff5252'`
+- Font family: `font=('Arial', 24)`
+- Transparency: `attributes('-alpha', 0.92)`
+
+### Scroll Speed
+
+Default speed (0-10 scale):
+```python
+self.scroll_speed_var = tk.IntVar(value=3)
+```
+
+### Auto-start Delay
+
+Change 5-second delay:
+```python
+self.root.after(5000, self._auto_start_teleprompter)  # 5000ms = 5 seconds
+```
 
 ## License
 
