@@ -25,15 +25,16 @@ class ScreenAnalysisApp:
         
         # Set window icon (logo)
         try:
-            # For Windows: use .ico file
-            self.root.iconbitmap("logo.ico")
-        except:
-            try:
-                # For PNG/other formats (cross-platform)
+            # Try PNG format (cross-platform)
+            if os.path.exists("logo.png"):
                 icon_image = tk.PhotoImage(file="logo.png")
                 self.root.iconphoto(True, icon_image)
-            except:
-                pass  # No icon file found, use default
+            elif os.path.exists("logo.ico"):
+                # For Windows: use .ico file
+                self.root.iconbitmap("logo.ico")
+        except Exception as e:
+            print(f"Could not load logo: {e}")
+            pass  # No icon file found, use default
         
         self.capturer = ScreenCapture()
         self.analyzer = None
