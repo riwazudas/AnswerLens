@@ -1,4 +1,4 @@
-# Screen Analysis Application with AI Teleprompter
+# AnswerLens - AI Screen Analysis with Teleprompter
 
 An intelligent application that captures your screen, uses Google Gemini AI to analyze the content, and provides a professional teleprompter for reading AI responses.
 

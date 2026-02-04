@@ -1,5 +1,6 @@
 """
-GUI Application for Screen Analysis using Google Gemini
+AnswerLens - AI Screen Analysis Application
+GUI Application using Google Gemini
 """
 
 import tkinter as tk
@@ -15,12 +16,24 @@ from region_selector import RegionSelector
 
 
 class ScreenAnalysisApp:
-    """Main GUI application for screen analysis"""
+    """AnswerLens - Main GUI application for AI screen analysis"""
     
     def __init__(self, root):
         self.root = root
-        self.root.title("Screen Analysis with Google Gemini")
+        self.root.title("AnswerLens - AI Screen Analysis")
         self.root.geometry("1200x750")
+        
+        # Set window icon (logo)
+        try:
+            # For Windows: use .ico file
+            self.root.iconbitmap("logo.ico")
+        except:
+            try:
+                # For PNG/other formats (cross-platform)
+                icon_image = tk.PhotoImage(file="logo.png")
+                self.root.iconphoto(True, icon_image)
+            except:
+                pass  # No icon file found, use default
         
         self.capturer = ScreenCapture()
         self.analyzer = None

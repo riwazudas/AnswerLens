@@ -1,4 +1,4 @@
-# Screen Analysis Application Requirements
+# AnswerLens - AI Screen Analysis Requirements
 
 # Core dependencies
 mss>=9.0.1
