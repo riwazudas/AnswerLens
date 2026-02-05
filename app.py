@@ -49,7 +49,11 @@ class ScreenAnalysisApp:
         self.teleprompter_window = None
         self.teleprompter_scroll_active = False
         self.teleprompter_scroll_timer = None
+        self.teleprompter_word_timer = None
         self.teleprompter_controls_visible = True
+        self.current_word_index = 0
+        self.word_positions = []
+        self.scroll_delay_counter = 0
         
         self.setup_ui()
         self.load_config()
@@ -488,9 +492,9 @@ class ScreenAnalysisApp:
         self.teleprompter_window = tk.Toplevel(self.root)
         self.teleprompter_window.title("Teleprompter")
         
-        # Window dimensions - taller for cue prompter style
-        window_width = 550
-        window_height = 500
+        # Window dimensions - fixed size for consistent viewing
+        window_width = 600
+        window_height = 400
         
         # Center the window on screen
         screen_width = self.teleprompter_window.winfo_screenwidth()
@@ -502,13 +506,10 @@ class ScreenAnalysisApp:
         
         # Window styling - clean and minimal with transparency
         self.teleprompter_window.configure(bg='#2b2b2b')
-        # Allow normal window controls for resizing
-        # self.teleprompter_window.overrideredirect(True)  # Disabled to allow resizing
         self.teleprompter_window.attributes('-alpha', 0.92)  # 92% opacity (slightly see-through)
         
-        # Make window resizable
-        self.teleprompter_window.minsize(400, 300)  # Minimum size
-        self.teleprompter_window.resizable(True, True)
+        # Make window fixed size (not resizable)
+        self.teleprompter_window.resizable(False, False)
         
         # Add rounded corner effect with shadow (visual only)
         main_frame = tk.Frame(self.teleprompter_window, bg='#2b2b2b', highlightthickness=2, 
@@ -553,67 +554,31 @@ class ScreenAnalysisApp:
         separator = tk.Frame(main_frame, bg='#404040', height=1)
         separator.pack(fill=tk.X, padx=10, pady=(0, 10))
         
-        # Text display area with reading line marker (cue prompter style)
+        # Text display area with scrollbar
         text_container = tk.Frame(main_frame, bg='#2b2b2b')
-        text_container.pack(fill=tk.BOTH, expand=True, padx=0, pady=(0, 10))
+        text_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 10))
         
-        # Create canvas for reading line overlay
-        self.teleprompter_canvas = tk.Canvas(text_container, bg='#2b2b2b', 
-                                             highlightthickness=0)
-        self.teleprompter_canvas.pack(fill=tk.BOTH, expand=True)
+        # Create scrollbar (hidden but functional)
+        scrollbar = tk.Scrollbar(text_container)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Text widget for content
-        self.teleprompter_text = tk.Text(self.teleprompter_canvas, wrap=tk.WORD, 
+        self.teleprompter_text = tk.Text(text_container, wrap=tk.WORD, 
                                          bg='#1a1a1a', fg='#e0e0e0',
                                          font=('Arial', 24, 'normal'), bd=0,
                                          padx=30, pady=60, spacing3=10,
                                          insertbackground='#e0e0e0',
-                                         relief=tk.FLAT)
+                                         relief=tk.FLAT,
+                                         yscrollcommand=scrollbar.set)
+        self.teleprompter_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Place text widget in canvas
-        text_window = self.teleprompter_canvas.create_window(0, 0, anchor='nw', 
-                                                             window=self.teleprompter_text)
+        # Configure scrollbar
+        scrollbar.config(command=self.teleprompter_text.yview)
         
-        # Create reading line indicator (horizontal line in upper third)
-        def create_reading_line():
-            canvas_height = self.teleprompter_canvas.winfo_height()
-            canvas_width = self.teleprompter_canvas.winfo_width()
-            reading_y = canvas_height // 3  # Upper third position
-            
-            # Delete old lines
-            self.teleprompter_canvas.delete('reading_line')
-            
-            # Create gradient effect with multiple lines
-            for i in range(3):
-                opacity = ['#ff6b6b', '#ff5252', '#ff6b6b'][i]
-                self.teleprompter_canvas.create_line(
-                    20, reading_y + i - 1, canvas_width - 20, reading_y + i - 1,
-                    fill=opacity, width=1, tags='reading_line'
-                )
-            
-            # Add subtle boxes on sides for focus
-            box_height = 60
-            self.teleprompter_canvas.create_rectangle(
-                0, reading_y - box_height//2, 15, reading_y + box_height//2,
-                fill='#ff5252', outline='', tags='reading_line'
-            )
-            self.teleprompter_canvas.create_rectangle(
-                canvas_width - 15, reading_y - box_height//2, 
-                canvas_width, reading_y + box_height//2,
-                fill='#ff5252', outline='', tags='reading_line'
-            )
-        
-        # Update reading line on resize
-        def on_canvas_configure(e):
-            canvas_width = e.width
-            self.teleprompter_canvas.itemconfig(text_window, width=canvas_width)
-            create_reading_line()
-        
-        self.teleprompter_canvas.bind('<Configure>', on_canvas_configure)
-        
-        # Force initial reading line creation after window is shown
-        self.teleprompter_window.update_idletasks()
-        create_reading_line()
+        # Hide the scrollbar visually but keep it functional
+        scrollbar.pack_forget()
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        scrollbar.config(width=0)  # Make scrollbar invisible
         
         # Control buttons frame
         self.teleprompter_control_frame = tk.Frame(main_frame, bg='#2b2b2b')
@@ -672,6 +637,9 @@ class ScreenAnalysisApp:
         current_answer = self.answer_text.get("1.0", tk.END).strip()
         if current_answer:
             self.teleprompter_text.insert("1.0", current_answer)
+            # Configure tag for highlighted word
+            self.teleprompter_text.tag_config("highlight", background="#ffff00", foreground="#000000", font=('Arial', 24, 'normal'))
+            self._parse_words()
         else:
             self.teleprompter_text.insert("1.0", "No response available yet.\n\nAnalyze a screen to see the results here.")
             self.teleprompter_text.tag_add("center", "1.0", "end")
@@ -707,52 +675,19 @@ class ScreenAnalysisApp:
         # Cleanup when window closes
         self.teleprompter_window.protocol("WM_DELETE_WINDOW", self.close_teleprompter)
         
-        # Update teleprompter content when answer changes
-        self.root.after(100, self._sync_teleprompter)
-        
         # Auto-start scrolling after 5 seconds
         self.root.after(5000, self._auto_start_teleprompter)
     
-    def _sync_teleprompter(self):
-        """Continuously sync the teleprompter with the main answer text"""
-        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
-            try:
-                # Get current answer
-                current_answer = self.answer_text.get("1.0", tk.END).strip()
-                teleprompter_content = self.teleprompter_text.get("1.0", tk.END).strip()
-                
-                # Update only if content has changed
-                if current_answer != teleprompter_content:
-                    # Save scroll position
-                    scroll_pos = self.teleprompter_text.yview()
-                    was_scrolling = self.teleprompter_scroll_active
-                    
-                    # Stop scrolling during update
-                    if was_scrolling:
-                        self.toggle_teleprompter_scroll()
-                    
-                    self.teleprompter_text.delete("1.0", tk.END)
-                    if current_answer:
-                        self.teleprompter_text.insert("1.0", current_answer)
-                    else:
-                        self.teleprompter_text.insert("1.0", "No response available yet.\n\nAnalyze a screen to see the results here.")
-                        self.teleprompter_text.tag_add("center", "1.0", "end")
-                        self.teleprompter_text.tag_config("center", justify='center', foreground='#888888')
-                    
-                    # Reset to top for new content
-                    self.teleprompter_text.yview_moveto(0)
-                
-                # Schedule next sync
-                self.root.after(500, self._sync_teleprompter)
-            except:
-                # Window was destroyed, stop syncing
-                pass
+    # Sync feature removed - teleprompter content is set once when window opens
+    # def _sync_teleprompter(self):
+    #     """Continuously sync the teleprompter with the main answer text"""
+    #     pass
     
     def _auto_start_teleprompter(self):
         """Auto-start scrolling after delay"""
         if self.teleprompter_window and self.teleprompter_window.winfo_exists():
-            # Only start if not already scrolling
-            if not self.teleprompter_scroll_active:
+            # Only start if not already scrolling and we have words to highlight
+            if not self.teleprompter_scroll_active and len(self.word_positions) > 0:
                 self.toggle_teleprompter_scroll()
     
     def toggle_teleprompter_scroll(self):
@@ -764,12 +699,106 @@ class ScreenAnalysisApp:
         
         if self.teleprompter_scroll_active:
             self.scroll_toggle_btn.config(text="⏸ Pause", bg='#cc0000')
-            self._auto_scroll_teleprompter()
+            # Reset delay counter when starting
+            self.scroll_delay_counter = 0
+            # Start both continuous scrolling and word highlighting
+            self._continuous_scroll()
+            self._highlight_next_word()
         else:
             self.scroll_toggle_btn.config(text="▶ Play", bg='#00aa00')
+            # Cancel both timers
             if self.teleprompter_scroll_timer:
                 self.root.after_cancel(self.teleprompter_scroll_timer)
                 self.teleprompter_scroll_timer = None
+            if self.teleprompter_word_timer:
+                self.root.after_cancel(self.teleprompter_word_timer)
+                self.teleprompter_word_timer = None
+    
+    def _continuous_scroll(self):
+        """Continuously scroll the text at a fixed smooth speed"""
+        if not self.teleprompter_scroll_active:
+            return
+        
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            try:
+                # Get current scroll position
+                yview_result = self.teleprompter_text.yview()
+                if not yview_result or len(yview_result) < 2:
+                    # Invalid yview result, skip this frame
+                    self.teleprompter_scroll_timer = self.root.after(50, self._continuous_scroll)
+                    return
+                    
+                current_pos = yview_result[0]
+                
+                # Sanity check: ensure position is valid
+                if current_pos < 0 or current_pos > 1:
+                    # Invalid position, don't scroll this frame
+                    self.teleprompter_scroll_timer = self.root.after(50, self._continuous_scroll)
+                    return
+                
+                # Check if we've reached the end - just stop, don't reset
+                if current_pos >= 0.95:
+                    # Stop scrolling without resetting position
+                    self.teleprompter_scroll_active = False
+                    self.scroll_toggle_btn.config(text="▶ Play", bg='#00aa00')
+                    if self.teleprompter_scroll_timer:
+                        self.root.after_cancel(self.teleprompter_scroll_timer)
+                        self.teleprompter_scroll_timer = None
+                    if self.teleprompter_word_timer:
+                        self.root.after_cancel(self.teleprompter_word_timer)
+                        self.teleprompter_word_timer = None
+                    return
+                
+                # Delay scrolling for first 3 seconds (60 frames at 50ms) so first line completes
+                if self.scroll_delay_counter < 60:
+                    self.scroll_delay_counter += 1
+                    self.teleprompter_scroll_timer = self.root.after(50, self._continuous_scroll)
+                    return
+                
+                # Calculate scroll speed based on slider (0-10)
+                speed_value = self.scroll_speed_var.get()
+                # Slightly increased scroll speed
+                scroll_increment = 0.00009 + (speed_value * 0.0001)  # Range: 0.00009 to 0.00109
+                
+                # Scroll smoothly
+                self.teleprompter_text.yview_moveto(current_pos + scroll_increment)
+                
+                # Schedule next scroll (fixed 50ms for smooth animation)
+                self.teleprompter_scroll_timer = self.root.after(100, self._continuous_scroll)
+            except:
+                self.teleprompter_scroll_active = False
+    
+    def _highlight_next_word(self):
+        """Highlight the next word based on speed"""
+        if not self.teleprompter_scroll_active:
+            return
+        
+        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
+            try:
+                # Check if we have words to highlight
+                if not self.word_positions or self.current_word_index >= len(self.word_positions):
+                    return
+                
+                # Remove previous highlight
+                self.teleprompter_text.tag_remove("highlight", "1.0", tk.END)
+                
+                # Highlight current word
+                start_pos, end_pos = self.word_positions[self.current_word_index]
+                self.teleprompter_text.tag_add("highlight", start_pos, end_pos)
+                
+                # Calculate delay based on speed slider (0-10 range)
+                speed_value = self.scroll_speed_var.get()
+                # Convert speed: higher value = faster (shorter delay)
+                # Reduced delay for faster word highlighting
+                delay = max(80, int(600 - (speed_value * 50)))
+                
+                # Move to next word
+                self.current_word_index += 1
+                
+                # Schedule next word highlight
+                self.teleprompter_word_timer = self.root.after(delay, self._highlight_next_word)
+            except Exception as e:
+                print(f"Word highlight error: {e}")
     
     def reset_teleprompter(self):
         """Reset teleprompter to beginning"""
@@ -778,8 +807,34 @@ class ScreenAnalysisApp:
             if self.teleprompter_scroll_active:
                 self.toggle_teleprompter_scroll()
             
-            # Scroll to top
+            # Remove all highlights
+            self.teleprompter_text.tag_remove("highlight", "1.0", tk.END)
+            
+            # Reset word index, scroll counter, and scroll to top
+            self.current_word_index = 0
+            self.scroll_delay_counter = 0
             self.teleprompter_text.yview_moveto(0)
+    
+    def _parse_words(self):
+        """Parse text content and store word positions for highlighting"""
+        import re
+        self.word_positions = []
+        
+        # Get all text content
+        text = self.teleprompter_text.get("1.0", tk.END)
+        
+        # Find all words with their positions
+        for match in re.finditer(r'\S+', text):
+            start_idx = match.start()
+            end_idx = match.end()
+            
+            # Convert character positions to Tkinter text indices
+            start_pos = f"1.0 + {start_idx} chars"
+            end_pos = f"1.0 + {end_idx} chars"
+            
+            self.word_positions.append((start_pos, end_pos))
+        
+        self.current_word_index = 0
     
     def toggle_teleprompter_controls(self):
         """Toggle visibility of teleprompter control panel"""
@@ -806,45 +861,15 @@ class ScreenAnalysisApp:
                 except:
                     pass
     
-    def _auto_scroll_teleprompter(self):
-        """Automatically scroll the teleprompter text"""
-        if not self.teleprompter_scroll_active:
-            return
-        
-        if self.teleprompter_window and self.teleprompter_window.winfo_exists():
-            try:
-                # Get current scroll position
-                current_pos = self.teleprompter_text.yview()[0]
-                
-                # Calculate scroll increment based on speed slider (0-10 range)
-                speed_value = self.scroll_speed_var.get()
-                speed = max(10, int(100 - (speed_value * 9)))  # Convert 0-10 to delay (100ms-10ms)
-                scroll_increment = 0.005  # Smaller increments for smoother scrolling
-                
-                # Check if we've reached the end
-                if current_pos >= 0.95:
-                    # Reset to top and pause
-                    self.teleprompter_text.yview_moveto(0)
-                    self.toggle_teleprompter_scroll()
-                    return
-                
-                # Smooth scroll upward
-                self.teleprompter_text.yview_moveto(current_pos + scroll_increment)
-                
-                # Scroll by small increment
-                self.teleprompter_text.yview_moveto(current_pos + scroll_increment)
-                
-                # Schedule next scroll
-                self.teleprompter_scroll_timer = self.root.after(speed, self._auto_scroll_teleprompter)
-            except:
-                self.teleprompter_scroll_active = False
-    
     def close_teleprompter(self):
         """Clean up and close teleprompter window"""
         self.teleprompter_scroll_active = False
         if self.teleprompter_scroll_timer:
             self.root.after_cancel(self.teleprompter_scroll_timer)
             self.teleprompter_scroll_timer = None
+        if self.teleprompter_word_timer:
+            self.root.after_cancel(self.teleprompter_word_timer)
+            self.teleprompter_word_timer = None
         if self.teleprompter_window:
             self.teleprompter_window.destroy()
             self.teleprompter_window = None
