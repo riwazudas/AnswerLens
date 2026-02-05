@@ -611,6 +611,10 @@ class ScreenAnalysisApp:
         
         self.teleprompter_canvas.bind('<Configure>', on_canvas_configure)
         
+        # Force initial reading line creation after window is shown
+        self.teleprompter_window.update_idletasks()
+        create_reading_line()
+        
         # Control buttons frame
         self.teleprompter_control_frame = tk.Frame(main_frame, bg='#2b2b2b')
         self.teleprompter_control_frame.pack(fill=tk.X, padx=15, pady=(0, 10))
