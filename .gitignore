@@ -1,29 +1,52 @@
-# Ignore Python cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Virtual environment
+# Virtual environments
 venv/
 env/
 ENV/
+.venv
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
 
-# Environment variables
-.env
-
-# Configuration
+# Application specific
 config.json
+screenshots/
+*.png
+!logo.png
 
-# Screenshots
-screenshot_*.png
+# Logs
+*.log
 
 # OS
-.DS_Store
 Thumbs.db
+
+# PyInstaller
+*.spec
+build/
+dist/
