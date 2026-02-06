@@ -1,6 +1,49 @@
 # AnswerLens - AI Screen Analysis with Teleprompter
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/riwazudas/AnswerLens/releases)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+
 An intelligent application that captures your screen, uses Google Gemini AI to analyze the content, and provides a professional teleprompter for reading AI responses.
+
+## 📑 Table of Contents
+
+- [System Requirements](#-system-requirements)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Usage Guide](#-usage-guide)
+- [Use Cases](#-use-cases)
+- [Teleprompter Tips](#-teleprompter-tips)
+- [Project Structure](#-project-structure)
+- [Advanced Usage](#-advanced-usage)
+- [Distribution & Deployment](#-distribution--deployment)
+- [Documentation](#-documentation)
+- [Troubleshooting](#️-troubleshooting)
+- [Security & Privacy](#-security--privacy)
+- [Customization](#-customization)
+- [Version History](#-version-history)
+- [Contributing](#-contributing)
+- [Future Enhancements](#-future-enhancements)
+- [Acknowledgments](#-acknowledgments)
+- [Support](#-support)
+
+## 💻 System Requirements
+
+- **Operating System**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.14+
+- **Python**: 3.8 or higher
+- **RAM**: 4GB minimum, 8GB recommended
+- **Storage**: 100-200MB for application and dependencies
+- **Internet**: Required for Google Gemini API access
+- **Display**: Any resolution (1920x1080+ recommended for best experience)
+
+### Dependencies
+
+All dependencies are automatically installed via `requirements.txt`:
+- `tkinter` - GUI framework (usually included with Python)
+- `Pillow` - Image processing
+- `mss` - Fast screen capture
+- `google-generativeai` - Google Gemini AI SDK
+- `pywin32` - Windows-specific features (Windows only)
 
 ## ✨ Features
 
@@ -12,6 +55,7 @@ An intelligent application that captures your screen, uses Google Gemini AI to a
   - Fixed region for repeated captures
 - **Live Preview**: See your captured content instantly
 - **Screenshot Export**: Save captures as PNG files
+- **Custom Logo**: Branded application icon for professional appearance
 
 ### AI Analysis with Google Gemini
 - **FREE API**: Uses Google Gemini 1.5 Flash (completely free)
@@ -36,28 +80,53 @@ An intelligent application that captures your screen, uses Google Gemini AI to a
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Method 1: Easy Installation (Recommended)
+
+**Windows Users:**
+1. Download or clone this repository
+2. Double-click `setup.bat` to install
+3. Double-click `run.bat` to start AnswerLens
+
+**Linux/Mac Users:**
+```bash
+chmod +x setup.sh run.sh
+./setup.sh
+./run.sh
+```
+
+📖 **See [INSTALL.md](INSTALL.md) for detailed instructions**
+
+### Method 2: Manual Installation
+
+#### Prerequisites
 
 - Python 3.8 or higher
 - Google Gemini API key (FREE)
 
-### Installation
+#### Steps
 
 1. Clone or download this repository
 
-2. Install required packages:
+2. Create virtual environment (recommended):
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+venv\Scripts\activate     # Windows
+```
+
+3. Install required packages:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Get a FREE API key:
+4. Get a FREE API key:
    - Visit [Google AI Studio](https://aistudio.google.com/apikey)
    - Sign in with your Google account
    - Click "Create API Key"
    - Copy your API key
 
-### Running the Application
-
+5. Run the application:
 ```bash
 python app.py
 ```
@@ -137,14 +206,26 @@ python app.py
 ## 📁 Project Structure
 
 ```
-ScreenAnalysis/
+AnswerLens/
 ├── app.py                 # Main GUI application with teleprompter
 ├── screen_analyzer.py     # Screen capture functionality
 ├── llm_analyzer.py        # Google Gemini AI integration
 ├── region_selector.py     # Interactive region selection tool
-├── requirements.txt       # Python dependencies
+├── build_exe.py          # PyInstaller build script
+├── AnswerLens.spec       # PyInstaller specification
+├── requirements.txt      # Python dependencies
+├── setup.py              # Package setup configuration
 ├── config.json           # Saved configuration (API key)
-└── README.md             # This file
+├── logo.png              # Application icon
+├── setup.bat             # Windows setup script
+├── run.bat               # Windows run script
+├── setup.sh              # Linux/Mac setup script
+├── run.sh                # Linux/Mac run script
+├── README.md             # This file
+├── INSTALL.md            # Quick start guide for end users
+├── DEPLOYMENT.md         # Comprehensive deployment guide
+├── CHANGELOG.md          # Version history and changes
+└── LICENSE               # License information
 ```
 
 ## 🔧 Advanced Usage
@@ -183,9 +264,61 @@ export GEMINI_API_KEY="your-api-key"
 
 ### Fixed Region for Monitoring
 
-1. 📝 License
+1. Click "🔧 Set Fixed Region"
+2. Draw a rectangle on your screen
+3. Use "📷 Capture" repeatedly without re-selecting
+4. Perfect for monitoring specific screen areas
 
-This project is provided as-is for educational and personal use.
+## 📦 Distribution & Deployment
+
+### For End Users
+
+Want to share AnswerLens with others? We offer multiple distribution methods:
+
+#### Option 1: Virtual Environment Distribution (Recommended)
+- ✅ **Smallest size**: ~5MB source + ~80MB dependencies
+- ✅ **Easy updates**: Just replace Python files
+- ✅ **No antivirus issues**: No false positives
+- ✅ **Cross-platform**: Works on Windows, Linux, macOS
+
+Package includes: Python files + simple scripts (`setup.bat`, `run.bat`)
+
+#### Option 2: Standalone Executable
+- ⚠️ **Large size**: ~100-150MB per platform
+- ⚠️ **May trigger antivirus**: False positives common
+- Build using: `python build_exe.py`
+
+#### Option 3: Python Package
+- Install via pip after packaging
+- Suitable for Python developers
+- Build using: `python setup.py sdist bdist_wheel`
+
+📖 **See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide**
+
+### Build Executable (Optional)
+
+To create a standalone executable:
+
+```bash
+# Install PyInstaller
+pip install pyinstaller
+
+# Build executable
+python build_exe.py
+
+# Output in dist/AnswerLens.exe (Windows) or dist/AnswerLens (Linux/Mac)
+```
+
+## 📄 Documentation
+
+- **[README.md](README.md)** - Main documentation (this file)
+- **[INSTALL.md](INSTALL.md)** - Quick start guide for end users
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Comprehensive deployment and distribution guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+
+## 📝 License
+
+This project is provided as-is for educational and personal use. See [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
@@ -195,26 +328,10 @@ Contributions welcome! Feel free to:
 - Submit pull requests
 - Improve documentation
 
-## 🙏 Acknowledgments
+## �️ Troubleshooting
 
-- **Google Gemini**: Powerful free AI vision model
-- **Python Community**: Amazing libraries (Pillow, mss, tkinter)
-- **Cue Prompter**: Inspiration for teleprompter design
-
-## 📞 Support
-
-For issues or questions:
-1. Check the Troubleshooting section
-2. Review Google Gemini documentation
-3. Open an issue on the repository
-
-## ⭐ Star This Project
-
-If you find this useful, please consider starring the repository!
-
----
-
-**Built with ❤️ using Python, Google Gemini AI, and Tkinter**d the API key and clicked "Initialize"
+**"API key is invalid" error**:
+- Ensure you pasted the API key and clicked "Initialize"
 - Check that you copied the complete key from Google AI Studio
 
 **"Failed to capture screen" error**:
@@ -269,20 +386,81 @@ Change 5-second delay:
 self.root.after(5000, self._auto_start_teleprompter)  # 5000ms = 5 seconds
 ```
 
-## License
+## 📊 Version History
 
-This project is provided as-is for educational and personal use.
+### Current Version: 1.0.0 (Released: February 4, 2026)
 
-## Contributing
+**Major Features:**
+- ✅ Screen capture (fullscreen, window, region, fixed region)
+- ✅ Google Gemini AI integration
+- ✅ Professional teleprompter with auto-scroll
+- ✅ Live preview and screenshot export
+- ✅ Continuous monitoring mode
+- ✅ Logo/icon support
+- ✅ Cross-platform compatibility
+- ✅ Simple setup scripts for easy installation
+- ✅ Multiple deployment options
 
-Feel free to fork, modify, and improve this application!
+📖 **See [CHANGELOG.md](CHANGELOG.md) for complete version history**
 
-## Future Enhancements
+## 🤝 Contributing
 
-- Support for region selection with mouse
-- History of questions and answers
+Contributions welcome! Feel free to:
+- 🐛 Report bugs via GitHub Issues
+- 💡 Suggest features and enhancements
+- 🔧 Submit pull requests
+- 📖 Improve documentation
+- ⭐ Star the repository if you find it useful
+
+### Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/riwazudas/AnswerLens.git
+cd AnswerLens
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # or venv\\Scripts\\activate on Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python app.py
+```
+
+## 🔮 Future Enhancements
+
+Planned features for future releases:
 - Multiple monitor support
+- History of questions and answers
 - Video/GIF capture and analysis
 - OCR integration
 - Batch processing of screenshots
 - Web interface option
+- Custom keyboard shortcuts
+- Dark/light theme toggle
+- Export responses to various formats
+
+## 🙏 Acknowledgments
+
+- **Google Gemini**: Powerful free AI vision model
+- **Python Community**: Amazing libraries (Pillow, mss, tkinter)
+- **Cue Prompter**: Inspiration for teleprompter design
+
+## 📞 Support
+
+For issues or questions:
+1. Check the [Troubleshooting](#🛠️-troubleshooting) section
+2. Review [Google Gemini documentation](https://ai.google.dev/docs)
+3. Open an issue on the [GitHub repository](https://github.com/riwazudas/AnswerLens/issues)
+
+## ⭐ Star This Project
+
+If you find AnswerLens useful, please consider starring the repository!
+
+---
+
+**Built with ❤️ using Python, Google Gemini AI, and Tkinter**
+
